@@ -1,0 +1,3 @@
+<launch>
+	<node pkg="fantastic_maze" type="robot.py" name="maze_runner" output="screen" required="true" />
+</launch>
