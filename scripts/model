@@ -1,0 +1,14 @@
+constant velocity:
+(x, y) = (x, y) + (v_x, v_y) * time_diff
+loc[0] = loc[0] + v * cos(θ) * time_diff
+loc[1] = loc[1] + v * sin(θ) * time_diff
+
+x: without B
+| 1,     cos(θ) * time_diff | * | x | = | x + v * (cos(θ) * time_diff) |
+| 0,     1					|	| v |	| 0 + v                        |
+
+| 1 0 | * | x | = | true_x |
+| 0 1 |   | v |	  | true_v |
+
+
+

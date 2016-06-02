@@ -12,12 +12,25 @@ class Kalman:
 		R: the varaiance of the noise signal to represent the accuracy of sensor (which should be a constant)
 		P: the covariance of the estimation process at step k. The average of the squared error of predictions
 		z: First observation data
+		---------------------------------------
+		A: n by n 	x: n by 1	z: n by 1
+		B: n by n 	u: n by 1
+		C: n by n
+		R: n by n
+		P: n by n
 	"""
 	def __init__(self, A, B, C, R, P, z):
 		if (not isinstance(A, np.matrix)) or (not isinstance(B, np.matrix)) or \
 		   (not isinstance(C, np.matrix)) or (not isinstance(R, np.matrix)) or \
 		   (not isinstance(P, np.matrix)) or (not isinstance(z, np.matrix)):
 			raise Exception("Initialization failed! All parameters should have type: numpy.matrix")
+
+		if A.shape[0] != A.shape[1] or A.shape != B.shape or A.shape != C.shape or \
+		   A.shape != R.shape or A.shape != P.shape:
+		   	raise Exception("A | B | C | P | R should all have shape n * n")
+
+		if z.shape[0] != 1 or z.shape[1] != A.shape[0]:
+			raise Exception("z should have shape n * 1")
 
 		self.A = A
 		self.B = B
