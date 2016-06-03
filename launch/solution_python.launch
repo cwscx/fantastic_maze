@@ -1,3 +1,13 @@
 <launch>
+	<arg name="map_file"       default="$(find fantastic_maze)/map/stage.yaml"/>
+	<arg name="world_file"     default="$(find fantastic_maze)/map/stage.world"/>
+
 	<node pkg="fantastic_maze" type="robot.py" name="maze_runner" output="screen" required="true" />
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(arg world_file)">
+		<param name="base_watchdog_timeout" value="1000"/>
+	</node>
+
+	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+	    <param name="frame_id" value="/map"/>
+	</node>
 </launch>

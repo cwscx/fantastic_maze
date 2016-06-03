@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from image_gen import ImageGen
 
 class Maze:
 
@@ -39,6 +40,8 @@ class Maze:
 		# self.maze[self.exit] = 8;
 
 		# print self.maze
+		i = ImageGen(size, size, self.maze)
+		i.save_image()
 		
 
 	def DFS_path(self, start, goal, random=False):
