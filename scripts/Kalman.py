@@ -63,7 +63,7 @@ class Kalman:
 			self.x = z
 
 
-	def update_with_data(self, x_data, u_data):
+	def process_data(self, x_data, u_data):
 		if len(x_data) != len(u_data) or len(x_data) == 0:
 			raise Exception ("Invalid Size")
 
