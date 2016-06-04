@@ -3,6 +3,33 @@ import math
 
 from Kalman import *
 
+
+"""
+	Transfer
+	[(t1, t2, t3, ..., tn), (t1', t2', t3', ..., tn'), (t1'', t2'', t3'', ..., tn''')] ===> 
+	[(t1, t1', t1'', ...,), (t2, t2', t2'', ...), (t3, t3', t3'', ...), ..., (tn, tn', tn'',...)]
+"""
+def _batch_from_array_of_tuples(array_of_tuples):
+	"""
+	Same as
+	for i in xrange(len(x_data_m[0])):
+		l = list()
+		for j in xrange(len(x_data_m)):
+			l.append(x_data_m[j][i])
+		bath_x_data.append(l)
+	"""
+	return [tuple([array_of_tuples[j][i] for j in xrange(len(array_of_tuples))]) for i in xrange(len(array_of_tuples[0]))]
+
+
+"""
+	Transfer
+	[(t1, t1', t1'', ...,), (t2, t2', t2'', ...), (t3, t3', t3'', ...), ..., (tn, tn', tn'',...)] ====>
+	[(t1, t2, t3, ..., tn), (t1', t2', t3', ..., tn'), (t1'', t2'', t3'', ..., tn''')]
+"""
+def _batch_to_array_of_tuples(batch):
+	return [ tuple([batch[j][i] for j in xrange(len(batch))]) for i in xrange(len(batch[0]))]
+
+
 class simpleKalmanAgent():
 	"""
 		velocity : double
@@ -29,6 +56,9 @@ class simpleKalmanAgent():
 	"""
 	def _init_sensor(self, sensor_num, time_diff):
 		self.thetas = [i * (2 * math.pi / sensor_num) for i in xrange(sensor_num)]
+
+		# because of math.cos(self.thetas[i]) for each different direction, 
+		# we can pass in velocity on x_axis for each sensor without further modification
 		self.x_As = [np.matrix([ [1, math.cos(self.thetas[i]) * time_diff], [0, 1] ]) for i in xrange(sensor_num)] 
 		self.y_As = [np.matrix([ [1, math.sin(self.thetas[i]) * time_diff], [0, 1] ]) for i in xrange(sensor_num)]
 
@@ -38,6 +68,8 @@ class simpleKalmanAgent():
 		self.R = np.matrix([[100, 0], [0, 100]])
 		self.P = np.matrix([[1, 0], [0, 1]])
 
+		# List of Kalman filters for distance measurement on x_axis of different directions
+		# same for y_axis
 		self.x_kalmans = [Kalman(A, self.B, self.C, self.R, self.P) for A in self.x_As]
 		self.y_kalmans = [Kalman(A, self.B, self.C, self.R, self.P) for A in self.y_As]
 
@@ -46,6 +78,8 @@ class simpleKalmanAgent():
 		x_data should have the form List[(x1, x2, x3, ..., xn), (x1', x2', x3', ..., xn'), ...] if there are n sensors
 		Same as y_data
 		u_data should have the same length, but each of which should be a matrix
+		---------------------------------
+		return value: List[(m1, m2, m3, ..., mn), (m1', m2', m3', ..., mn'), ...]
 	"""
 	def process_data(self, x_data, y_data, u_data):
 		if len(x_data[0]) != len(self.x_kalmans):
@@ -57,38 +91,34 @@ class simpleKalmanAgent():
 		if not isinstance(u_data[0][0], np.matrix):
 			raise Exception ("u_data should be matrix")
 
+		# Transfer measure data to matrix with velocity
 		x_data_m = [ tuple(np.matrix([[x], [self.velocity * math.cos(self.direction)]]) for index, x in enumerate(x_d)) 
 						for x_d in x_data]
 		y_data_m = [ tuple(np.matrix([[y], [self.velocity * math.sin(self.direction)]]) for index, y in enumerate(y_d)) 
 						for y_d in y_data]
-		
-		batch_x_data = []
-		batch_y_data = []
-	
-		"""
-		Same as
-		for i in xrange(len(x_data_m[0])):
-			l = list()
-			for j in xrange(len(x_data_m)):
-				l.append(x_data_m[j][i])
-			bath_x_data.append(l)
-		"""
-		batch_x_data = [[x_data_m[j][i] for j in xrange(len(x_data_m))] for i in xrange(len(x_data_m[0]))]
-		batch_y_data = [[y_data_m[j][i] for j in xrange(len(y_data_m))] for i in xrange(len(y_data_m[0]))]
-		batch_u_data = [[u_data[j][i]   for j in xrange(len(u_data))]   for i in xrange(len(u_data[0]))]
 
+		batch_x_data = _batch_from_array_of_tuples(x_data_m)
+		batch_y_data = _batch_from_array_of_tuples(y_data_m)
+		batch_u_data = _batch_from_array_of_tuples(u_data)
+
+		###### Start Process Data ######
 		x_res = []
 		y_res = []	
 
 		for index, x_d in enumerate(batch_x_data):
-			x_res[len(x_res):] = self.x_kalmans[index].process_data(x_d, batch_u_data[index])
+			x_res.append(self.x_kalmans[index].process_data(x_d, batch_u_data[index]))
 
 		for index, y_d in enumerate(batch_y_data):
-			y_res[len(y_res):] = self.y_kalmans[index].process_data(y_d, batch_u_data[index])
+			y_res.append(self.y_kalmans[index].process_data(y_d, batch_u_data[index]))
 
-		print x_res
-		print y_res
+		###### Finish Process Data ######
+		
+		x_res = _batch_to_array_of_tuples(x_res)
+		y_res = _batch_to_array_of_tuples(y_res)
 
-		return x_res, y_res
+		x_measures = [ tuple([x.item(0) for x in x_tuple]) for x_tuple in x_res]
+		y_measures = [ tuple([y.item(0) for y in y_tuple]) for y_tuple in y_res]
 
-	
+		print x_measures, y_measures
+		return x_measures, y_measures
+
