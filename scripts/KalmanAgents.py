@@ -49,6 +49,14 @@ class simpleKalmanAgent():
 
 		self._init_sensor(sensor_num, time_diff)
 
+		# Keep track of visited free spaces / walls
+		self.knowledge_map = {
+			'Entry'		: pos,
+			'Free Space': [pos],
+			'Wall'		: [],
+			'Exit'		: None
+		}
+
 
 	"""
 		So the sensor here is fixed to the angles, not related to the robot's directions, because
@@ -72,6 +80,14 @@ class simpleKalmanAgent():
 		# same for y_axis
 		self.x_kalmans = [Kalman(A, self.B, self.C, self.R, self.P) for A in self.x_As]
 		self.y_kalmans = [Kalman(A, self.B, self.C, self.R, self.P) for A in self.y_As]
+
+	
+	def move(self):
+		raise Exception ("TO DO")
+
+
+	def subscriber(self):
+		raise Exception ("TO DO")
 
 
 	"""
@@ -121,4 +137,3 @@ class simpleKalmanAgent():
 
 		print x_measures, y_measures
 		return x_measures, y_measures
-
