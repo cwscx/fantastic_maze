@@ -50,10 +50,11 @@ class simpleKalmanAgent():
 		self._init_sensor(sensor_num, time_diff)
 
 		# Keep track of visited free spaces / walls
+		# Free Space keep track of location and its possibility of being a free space / wall
 		self.knowledge_map = {
 			'Entry'		: pos,
-			'Free Space': [pos],
-			'Wall'		: [],
+			'Free Space': {pos: 1.0}
+			'Wall'		: {}
 			'Exit'		: None
 		}
 
