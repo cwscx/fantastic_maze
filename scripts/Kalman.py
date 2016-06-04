@@ -63,6 +63,9 @@ class Kalman:
 			self.x = z
 
 
+	"""
+		Batch-Process data for a Kalman filter
+	"""
 	def process_data(self, x_data, u_data):
 		if len(x_data) != len(u_data) or len(x_data) == 0:
 			raise Exception ("Invalid Size")
@@ -77,4 +80,4 @@ class Kalman:
 			self.update(x_d)
 			res.append(self.x)
 
-		return res
+		return tuple(res)

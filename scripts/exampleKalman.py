@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 
 from Kalman import *
@@ -22,5 +23,11 @@ res = [r.item(0) for r in res]
 # plt.plot(res)
 # plt.show()
 
-ka = simpleKalmanAgent(2, 1)
+ka = simpleKalmanAgent(2, (0,0), 0, 4, 1)
 
+x_data = [(1,0,13,0), (3,0,11, 0), (5,0,9,0), (7,0,7,0), (9,0,5,0), (11,0,3,0)]
+y_data = [(0,2,0,4), (0,2,0,4), (0,2,0,4), (0,2,0,4), (0,2,0,4), (0,2,0,4)]
+u_data = [(np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])), (np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])), (np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])), (np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])), (np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])), (np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]))]
+
+
+ka.process_data(x_data, y_data, u_data)
