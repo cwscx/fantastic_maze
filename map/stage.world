@@ -9,7 +9,7 @@ define topurg ranger
   sensor(       
     range [ 0.0  200.0 ]
     fov 360
-    samples 100 
+    samples 4 
   )
 
   color "black"
@@ -33,7 +33,7 @@ define robot position
 )
 
 # throw in a robot in the map
-robot( pose [ 15.0 15.0 0.0 0.0 ] name "robot" color "red")
+robot( pose [ -90.0 10.0 0.0 0.0 ] name "robot" color "red")
 
 #FloorPlan Properties
 define floorplan model
@@ -46,7 +46,7 @@ define floorplan model
 
   gui_nose 0
   gui_grid 0
-
+  gui_move 0
   gui_outline 0
   gripper_return 0
   fiducial_return 0
@@ -60,10 +60,10 @@ interval_sim 100  # simulation timestep in milliseconds
 #Window Properties
 window
 ( 
-  size [ 612.000 484.000 ] 
+  size [ 600.000 600.000 ] 
 
   rotate [ 0.000 0.0 ]
-  scale 2.358 
+  scale 2.5
 )
 
 # load an environment bitmap
@@ -72,5 +72,5 @@ floorplan
   name "tutorial"
   bitmap "maze.png"
   size [200.0 200.0 0.5]
-  pose [ 129.5 97.0 0.0 0.0 ]
+  pose [ 0.0 0.0 0.0 0.0 ]
 )
