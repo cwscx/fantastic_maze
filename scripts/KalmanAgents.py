@@ -66,7 +66,7 @@ class simpleKalmanAgent():
 		self.y_laserData = []
 		self.subscriber()
 		self.done = False
-		# for i in range(9):
+
 		while not self.done:
 			self.process_move()
 
@@ -123,7 +123,6 @@ class simpleKalmanAgent():
 
 
 	def subscriber(self):
-		# rospy.init_node('kalman')
 		self.laserSub = rospy.Subscriber('/base_scan', LaserScan, self.handleLaser)
 		self.goalScan = rospy.Subscriber('/goal_sense', GoalSense, self.handleGoal)
 		rospy.sleep(1)
@@ -142,13 +141,10 @@ class simpleKalmanAgent():
 		else:
 			self.x_laserData.append((message.ranges[3], 0, message.ranges[1], 0))
 			self.y_laserData.append((0, message.ranges[0], 0, message.ranges[2]))
-			
-		#print(self.laser)
+		
 
 	def handleGoal(self, message):
 		self.goals = message
-
-		print self.goals
 
 		if self.goals.straight:
 			self.knowledge_map["Exit_Direction"] = self.direction
@@ -160,12 +156,12 @@ class simpleKalmanAgent():
 			self.knowledge_map["Exit_Direction"] = (self.direction + 3) % 4
 		
 		self.done = self.goals.goal
-		if self.goals.goal:
+		if self.goals.goal:			# we solved the maze!
 			rospy.signal_shutdown('reached goal')
 
 	def get_direction(self, x, y):
 		ds = [x[0], y[1], x[2], y[3]]
-		print ds
+		# print ds
 		
 		rounded = [round(d, -1) for d in ds]
 		avail = filter(lambda x: x != -100, [-100 if abs(d) <= 10 else index for index, d in enumerate(rounded)])
@@ -180,7 +176,7 @@ class simpleKalmanAgent():
 				self.knowledge_map['Wall'].append(pos)
 		###############
 
-		print self.knowledge_map["Exit_Direction"]
+		# print self.knowledge_map["Exit_Direction"]
 		if self.knowledge_map["Exit_Direction"] in avail:
 			return self.knowledge_map["Exit_Direction"]
 
