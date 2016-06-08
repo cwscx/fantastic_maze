@@ -9,7 +9,7 @@ define topurg ranger
   sensor(       
     range [ 0.0  200.0 ]
     fov 360
-    samples 4 
+    samples 5 
   )
 
   color "black"
