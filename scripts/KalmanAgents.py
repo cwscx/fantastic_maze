@@ -1,8 +1,11 @@
 import numpy as np
 import math
+import rospy
 
 from Kalman import *
-
+from helpers import *
+from sensor_msgs.msg import LaserScan
+from fantastic_maze.msg import GoalSense
 
 """
 	Transfer
@@ -53,11 +56,20 @@ class simpleKalmanAgent():
 		# Free Space keep track of location and its possibility of being a free space / wall
 		self.knowledge_map = {
 			'Entry'		: pos,
-			'Free Space': {pos: 1.0}
-			'Wall'		: {}
+			# 'Free Space': {pos: 1.0},
+			'Wall'		: [],
+			'Visited'	: [pos],
 			'Exit'		: None
 		}
+		self.x_laserData = []
+		self.y_laserData = []
+		self.subscriber()
 
+		for i in range(4):
+			self.process_move()
+
+		print self.knowledge_map
+		rospy.spin()
 
 	"""
 		So the sensor here is fixed to the angles, not related to the robot's directions, because
@@ -83,13 +95,99 @@ class simpleKalmanAgent():
 		self.y_kalmans = [Kalman(A, self.B, self.C, self.R, self.P) for A in self.y_As]
 
 	
-	def move(self):
-		raise Exception ("TO DO")
+	def process_move(self):
+		rospy.sleep(2)
+		x, y = self.process_data(self.x_laserData, self.y_laserData, [(np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]]), np.matrix([[0], [0]])) for i in xrange(len(self.x_laserData))])
+		x = x[-1]
+		y = y[-1]
+
+		print self.x_laserData[-1]
+		print self.y_laserData[-1]
+
+		d = self.get_direction(x, y)
+		print d
+
+		# Turn
+		turn(((d - self.direction) % 4) * 90)
+		self.direction = d
+		
+		# Move
+		move()
+		self.pos = self.dir_to_pos(self.direction)
+
+		if self.pos not in self.knowledge_map["Visited"]:
+			self.knowledge_map['Visited'].append(self.pos)
+
+		self.x_laserData = []
+		self.y_laserData = []
 
 
 	def subscriber(self):
-		raise Exception ("TO DO")
+		# rospy.init_node('kalman')
+		self.laserSub = rospy.Subscriber('/base_scan', LaserScan, self.handleLaser)
+		self.goalScan = rospy.Subscriber('/goal_sense', GoalSense, self.handleGoal)
+		rospy.sleep(1)
 
+
+	def handleLaser(self, message):
+		if self.direction == 0:
+			self.x_laserData.append((message.ranges[2], 0, message.ranges[0], 0))
+			self.y_laserData.append((0, message.ranges[3], 0, message.ranges[1]))
+		elif self.direction == 1:
+			self.x_laserData.append((message.ranges[1], 0, message.ranges[3], 0))
+			self.y_laserData.append((0, message.ranges[2], 0, message.ranges[0]))
+		elif self.direction == 2:
+			self.x_laserData.append((message.ranges[0], 0, message.ranges[2], 0))
+			self.y_laserData.append((0, message.ranges[1], 0, message.ranges[3]))
+		else:
+			self.x_laserData.append((message.ranges[3], 0, message.ranges[1], 0))
+			self.y_laserData.append((0, message.ranges[0], 0, message.ranges[2]))
+			
+		#print(self.laser)
+
+	def handleGoal(self, message):
+		self.goals = message
+
+
+	def get_direction(self, x, y):
+		ds = [x[0], y[1], x[2], y[3]]
+		print ds
+		
+		rounded = [round(d, -1) for d in ds]
+		avail = filter(lambda x: x != -100, [-100 if abs(d) <= 10 else index for index, d in enumerate(rounded)])
+		
+		### Adding Walls
+		unava = filter(lambda x: x != -100, [index if abs(d) <= 10 else -100 for index, d in enumerate(rounded)])
+
+		for direction in unava:
+			pos = self.dir_to_pos(direction)
+
+			if pos not in self.knowledge_map["Wall"]:
+				self.knowledge_map['Wall'].append(pos)
+		###############
+
+		sorted_avail = sorted([(d, ds[d]) for d in avail], 
+							cmp=lambda x,y: cmp(x[1], y[1]), reverse=True)
+
+		for (direction, distance) in sorted_avail:
+			pos = self.dir_to_pos(direction)
+			if pos not in self.knowledge_map["Visited"]:
+				return direction
+
+		return ds.index(max([ds[d] for d in avail]))
+
+
+	def dir_to_pos(self, direction):
+		if direction == 0:
+			pos = (self.pos[0] + 1, self.pos[1])
+		elif direction == 1:
+			pos = (self.pos[0], self.pos[1] + 1)
+		elif direction == 2:
+			pos = (self.pos[0] - 1, self.pos[1])
+		else:
+			pos = (self.pos[0], self.pos[1] - 1)
+
+		return pos
 
 	"""
 		x_data should have the form List[(x1, x2, x3, ..., xn), (x1', x2', x3', ..., xn'), ...] if there are n sensors
@@ -136,5 +234,5 @@ class simpleKalmanAgent():
 		x_measures = [ tuple([x.item(0) for x in x_tuple]) for x_tuple in x_res]
 		y_measures = [ tuple([y.item(0) for y in y_tuple]) for y_tuple in y_res]
 
-		print x_measures, y_measures
+		# print x_measures, y_measures
 		return x_measures, y_measures

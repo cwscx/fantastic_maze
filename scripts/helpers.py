@@ -35,6 +35,7 @@ def move():
 
 # turns robot parameter angle number of degrees, without moving. 
 def turn(angle):
+	print('TURNING %d angles' % angle)
 	global direction
 	direction = (direction + angle) % 360
 	senseGoal()
