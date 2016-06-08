@@ -10,7 +10,7 @@ goal_sensor = rospy.Publisher('goal_sense', GoalSense, queue_size = 10)
 # hard coded constants: TODO modularize
 board_size = 10
 position = [0,4] # start position
-goal = [9,0]
+goal = [4,9]
 direction = 0
 
 # function to move robot one grid position forward in current angle. 
@@ -119,5 +119,6 @@ def senseGoal():
 	g.back = back
 	g.left = left
 	g.right = right
+	g.goal = position[0] == goal[0] and position[1] == goal[1]
 
 	goal_sensor.publish(g)

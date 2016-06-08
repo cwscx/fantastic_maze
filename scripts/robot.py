@@ -19,7 +19,7 @@ class Robot():
 		rospy.sleep(2)
 		
 		#turn(180)
-		ka = simpleKalmanAgent(2, (0,4), 0, 4, 1)
+		ka = simpleKalmanAgent(0, (0,4), 0, 4, 1)
 
 		# move()
 		# rospy.sleep(1)

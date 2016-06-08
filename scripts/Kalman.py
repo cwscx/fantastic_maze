@@ -44,7 +44,7 @@ class Kalman:
 	"""
 	def predict(self, u):
 		# If the Kalman hasn't receive any data yet, just do nothing
-		if hasattr(self, 'x'):
+		if hasattr(self, 'x') and self.x != None:
 			self.x = np.dot(self.A, self.x) + np.dot(self.B, u)
 			self.P = np.dot(np.dot(self.A, self.P), self.A.T)
 
@@ -54,13 +54,15 @@ class Kalman:
 		P_k = (I - G_k * C) * P_k
 	"""
 	def update(self, z):
-		if hasattr(self, 'x'):
+		# If Kalman hasn't received any data yet, just set the estimatino to the observed data
+		if not hasattr(self, 'x') or self.x == None:
+			self.x = z
+		else:
 			G = np.dot(np.dot(self.P, self.C.T), (np.dot(np.dot(self.C, self.P), self.C.T) + self.R).I)
 			self.x = self.x + np.dot(G, (z - np.dot(self.C, self.x)))
 			self.P = np.dot((np.identity(len(self.P)) - np.dot(G, self.C)), self.P)
-		# If Kalman hasn't received any data yet, just set the estimatino to the observed data
-		else:
-			self.x = z
+
+			
 
 
 	"""
@@ -78,6 +80,7 @@ class Kalman:
 		for index, x_d in enumerate(x_data):
 			self.predict(u_data[index])
 			self.update(x_d)
+		
 			res.append(self.x)
 
 		return tuple(res)

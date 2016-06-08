@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import rospy
+import random
 
 from Kalman import *
 from helpers import *
@@ -59,13 +60,14 @@ class simpleKalmanAgent():
 			# 'Free Space': {pos: 1.0},
 			'Wall'		: [],
 			'Visited'	: [pos],
-			'Exit'		: None
+			'Exit_Direction'		: None
 		}
 		self.x_laserData = []
 		self.y_laserData = []
 		self.subscriber()
-
-		for i in range(4):
+		self.done = False
+		# for i in range(9):
+		while not self.done:
 			self.process_move()
 
 		print self.knowledge_map
@@ -101,15 +103,13 @@ class simpleKalmanAgent():
 		x = x[-1]
 		y = y[-1]
 
-		print self.x_laserData[-1]
-		print self.y_laserData[-1]
-
 		d = self.get_direction(x, y)
-		print d
+		direction_turned = d - self.direction
+		self.direction = d
 
 		# Turn
-		turn(((d - self.direction) % 4) * 90)
-		self.direction = d
+		turn((direction_turned % 4) * 90)
+		
 		
 		# Move
 		move()
@@ -148,6 +148,20 @@ class simpleKalmanAgent():
 	def handleGoal(self, message):
 		self.goals = message
 
+		print self.goals
+
+		if self.goals.straight:
+			self.knowledge_map["Exit_Direction"] = self.direction
+		elif self.goals.back:
+			self.knowledge_map["Exit_Direction"] = (self.direction + 2) % 4
+		elif self.goals.left:
+		 	self.knowledge_map["Exit_Direction"] = (self.direction + 1) % 4
+		elif self.goals.right:
+			self.knowledge_map["Exit_Direction"] = (self.direction + 3) % 4
+		
+		self.done = self.goals.goal
+		if self.goals.goal:
+			rospy.signal_shutdown('reached goal')
 
 	def get_direction(self, x, y):
 		ds = [x[0], y[1], x[2], y[3]]
@@ -166,6 +180,10 @@ class simpleKalmanAgent():
 				self.knowledge_map['Wall'].append(pos)
 		###############
 
+		print self.knowledge_map["Exit_Direction"]
+		if self.knowledge_map["Exit_Direction"] in avail:
+			return self.knowledge_map["Exit_Direction"]
+
 		sorted_avail = sorted([(d, ds[d]) for d in avail], 
 							cmp=lambda x,y: cmp(x[1], y[1]), reverse=True)
 
@@ -174,7 +192,14 @@ class simpleKalmanAgent():
 			if pos not in self.knowledge_map["Visited"]:
 				return direction
 
-		return ds.index(max([ds[d] for d in avail]))
+		rd = random.random()
+		if rd < 0.7:
+			if self.direction in avail:
+				return self.direction
+			else:
+				return ds.index(max([ds[d] for d in avail]))
+		else:
+			return random.choice(avail)
 
 
 	def dir_to_pos(self, direction):
@@ -227,6 +252,10 @@ class simpleKalmanAgent():
 			y_res.append(self.y_kalmans[index].process_data(y_d, batch_u_data[index]))
 
 		###### Finish Process Data ######
+		for k in self.y_kalmans:
+			k.x = None
+		for k in self.x_kalmans:
+			k.x = None
 		
 		x_res = _batch_to_array_of_tuples(x_res)
 		y_res = _batch_to_array_of_tuples(y_res)
